@@ -4,9 +4,17 @@
 #include<string>
 #include<stack>
 #include<queue>
-#include <time.h>
+#include<time.h>
+#include<tuple>
+#include<limits>
 using namespace std;
-
+enum value : int8_t{
+    min = numeric_limits<int8_t>::min(),
+    win1 = -1,  //player_1
+    draw = 0,
+    win2 = 1,    //player_2
+    max = numeric_limits<int8_t>::max()
+};
 class Game{
     vector<string> board;
     stack<pair<int,int>> move_history;
@@ -86,56 +94,62 @@ class Game{
             vector<pair<int,int>> possible_moves;
             for(int x = 0; x < 3; x++){
                 for(int y = 0; y < 3; y++){
-                    if(board[y][x])
+                    if(board[y][x]=='-')
                         possible_moves.push_back(make_pair(x,y));
                 }
             }
             return possible_moves;
         }
-        char getScore(){
-            if(this->isEnd())
+        value getScore(){
+            if(this->isEnd()){
+                if(board[0].find('-') == std::string::npos&&board[1].find('-') == std::string::npos&&board[2].find('-') == std::string::npos)
+                    return value::draw;
+                else
+                    return current_player == player_1 ? value::win2 : value::win1;
+            }else
+                return value::draw;
         }
-};
-enum value : int8_t{
-    win1 = -1,
-    draw = 0,
-    win0 = 1
 };
 // x , y , score
 tuple<int,int,value> minimax(bool is_maximizing, Game &game){
     if(game.isEnd()){
         pair<int,int> move = game.getLastMove();
-        return make_tuple(move.first,move.second,);
+        return make_tuple(move.first,move.second, game.getScore());
     }
     vector<pair<int,int>> possible_moves = game.getPossibleMoves();
     if(is_maximizing){
-        tuple<int,int,value> val = make_tuple(0,0,value::win1);
+        tuple<int,int,value> val = make_tuple(0,0,value::min);
         for(int i = 0; i < possible_moves.size();i++){
+            game.makeMove(possible_moves[i].first,possible_moves[i].second);
             tuple<int,int,value> temp_val = minimax(!is_maximizing,game);
             val = get<2>(val)>get<2>(temp_val) ? val : temp_val;
             game.undo();
         }
+        return val;
     }else{
-        tuple<int,int,value> val = make_tuple(0,0,value::win0);
+        tuple<int,int,value> val = make_tuple(0,0,value::max);
         for(int i = 0; i < possible_moves.size();i++){
+            game.makeMove(possible_moves[i].first,possible_moves[i].second);
             tuple<int,int,value> temp_val = minimax(!is_maximizing,game);
             val = get<2>(val)<get<2>(temp_val) ? val : temp_val;
             game.undo();
         }
+        return val;
     }
 }
 
 int main(){
-    
     Game game('x','o');
     bool maximizing = true;
+    int max_moves = 9;
     cout << game.toString();
-    while(game.isEnd()){
+    while(!game.isEnd() && max_moves){
         Game copy_game = game;  //copying game
         tuple<int,int,int> move = minimax(maximizing, copy_game);
         game.makeMove(get<1>(move),get<0>(move));
         maximizing = !maximizing;
-        cout << game.toString();
+        cout << game.toString() << endl;
+        max_moves--;
     }
     cout << "game ends here" << endl;
 }
