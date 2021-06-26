@@ -145,8 +145,8 @@ int main(){
     cout << game.toString();
     while(!game.isEnd() && max_moves){
         Game copy_game = game;  //copying game
-        tuple<int,int,int> move = minimax(maximizing, copy_game);
-        game.makeMove(get<1>(move),get<0>(move));
+        tuple<int,int,value> move = minimax(maximizing, copy_game);
+        game.makeMove(get<0>(move),get<1>(move));
         maximizing = !maximizing;
         cout << game.toString() << endl;
         max_moves--;
